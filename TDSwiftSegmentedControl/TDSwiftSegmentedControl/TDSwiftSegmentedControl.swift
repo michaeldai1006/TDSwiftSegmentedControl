@@ -11,6 +11,8 @@ public class TDSwiftSegmentedControl: UIView {
     
     // Static values
     static private let buttonGap: CGFloat = 2.0
+    static private let buttonAnimationDuration: Double = 0.5
+    static private let buttonAnimationDamping: CGFloat = 0.75
     
     // Default control config
     static public let defaultConfig = TDSwiftSegmentedControlConfig.init(cornerRadius: 5.0,
@@ -45,6 +47,10 @@ public class TDSwiftSegmentedControl: UIView {
             return itemTitles.isEmpty ? 0.0 : self.frame.width / CGFloat(itemTitles.count)
         }
     }
+    
+    // State
+    var initButtonCenter: CGPoint!
+    var initButtonIndex: Int!
     
     public init(frame: CGRect, itemTitles: [String], config: TDSwiftSegmentedControlConfig = TDSwiftSegmentedControl.defaultConfig) {
         super.init(frame: frame)
@@ -85,6 +91,7 @@ public class TDSwiftSegmentedControl: UIView {
                                                width: itemWidth - TDSwiftSegmentedControl.buttonGap * 2,
                                                height: frame.height - TDSwiftSegmentedControl.buttonGap * 2))
         controlButton.setTitle(itemTitles.first, for: .normal)
+        controlButton.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(self.buttonPanned(recognizer:))))
         self.addSubview(controlButton)
     }
     
@@ -115,6 +122,15 @@ public class TDSwiftSegmentedControl: UIView {
         }
     }
     
+    private func nearestIndex(toPoint point: CGPoint) -> Int? {
+        // Return nil if the control has no items
+        if baseLabels.isEmpty { return nil }
+        
+        // Find nearest index
+        let distances = baseLabels.map { (label) -> CGFloat in abs(label.center.x - point.x) }
+        return distances.firstIndex(of: distances.min()!)
+    }
+    
     @objc private func labelTapped(recognizer: UITapGestureRecognizer) {
         if recognizer.state == .ended,
             let tappedLabel = recognizer.view as? UILabel,
@@ -123,12 +139,50 @@ public class TDSwiftSegmentedControl: UIView {
         }
     }
     
+    @objc private func buttonPanned(recognizer: UIPanGestureRecognizer) {
+        // Cancel if item list empty
+        if baseLabels.isEmpty { return }
+        
+        switch recognizer.state {
+        case .began:
+            // Init button location
+            initButtonCenter = controlButton.center
+            initButtonIndex = nearestIndex(toPoint: controlButton.center)
+            
+            if let nearestIndex = nearestIndex(toPoint: controlButton.center) {
+                // Control button init state
+                initButtonIndex = nearestIndex
+            } else {
+                // Cancel gesture
+                recognizer.isEnabled = false
+                recognizer.isEnabled = true
+            }
+        case .changed:
+            // Translation since beginning
+            let translation = recognizer.translation(in: self)
+            
+            // New button x value, with min and max limitation
+            let newX = max(min(initButtonCenter.x + translation.x, baseLabels.last!.center.x), baseLabels.first!.center.x)
+            
+            // Move button
+            controlButton.center = CGPoint(x: newX, y: controlButton.center.y)
+        case .ended, .failed, .cancelled:
+            if let nearestIndex = nearestIndex(toPoint: controlButton.center) {
+                moveButtonToItem(atIndex: nearestIndex)
+            } else {
+                moveButtonToItem(atIndex: initButtonIndex)
+            }
+            
+        default: break
+        }
+    }
+    
     public func moveButtonToItem(atIndex index: Int) {
         // Index invalid
         if (index < 0 || index > baseLabels.count - 1) { return }
         
         // Animate button
-        UIView.animate(withDuration: 1.0, delay: 0.0, usingSpringWithDamping: 0.75, initialSpringVelocity: 0.0, options: [.curveEaseOut, .transitionCrossDissolve], animations: {
+        UIView.animate(withDuration: TDSwiftSegmentedControl.buttonAnimationDuration, delay: 0.0, usingSpringWithDamping: TDSwiftSegmentedControl.buttonAnimationDamping, initialSpringVelocity: 0.0, options: [.curveEaseOut, .transitionCrossDissolve], animations: {
             self.controlButton.setTitle(self.itemTitles[index], for: .normal)
             self.controlButton.center = self.baseLabels[index].center
         }) { (result) in
