@@ -1,18 +1,25 @@
 import Foundation
 import UIKit
 
+protocol TDSwiftSegmentedControlDelegate: class {
+    func itemSelected(atIndex index: Int)
+}
+
 public class TDSwiftSegmentedControl: UIView {
+    // Delegate
+    weak var delegate: TDSwiftSegmentedControlDelegate?
+    
     // Static values
     static private let buttonGap: CGFloat = 2.0
     
     // Default control config
     static public let defaultConfig = TDSwiftSegmentedControlConfig.init(cornerRadius: 5.0,
-                                                                  baseBackgroundColor: UIColor(red:0.95, green:0.95, blue:0.95, alpha:1.0),
-                                                                  baseLabelFont: UIFont.boldSystemFont(ofSize: 14.0),
-                                                                  baseLabelColor: UIColor(red:0.73, green:0.73, blue:0.73, alpha:1.0),
-                                                                  buttonColor: .white,
-                                                                  buttonLabelFont: UIFont.boldSystemFont(ofSize: 14.0),
-                                                                  buttonLabelColor: .black)
+                                                                         baseBackgroundColor: UIColor(red:0.95, green:0.95, blue:0.95, alpha:1.0),
+                                                                         baseLabelFont: UIFont.boldSystemFont(ofSize: 14.0),
+                                                                         baseLabelColor: UIColor(red:0.73, green:0.73, blue:0.73, alpha:1.0),
+                                                                         buttonColor: .white,
+                                                                         buttonLabelFont: UIFont.boldSystemFont(ofSize: 14.0),
+                                                                         buttonLabelColor: .black)
     
     // Control properties
     public var cornerRadius: CGFloat! { didSet { self.updateCornerRadius() } }
@@ -58,11 +65,17 @@ public class TDSwiftSegmentedControl: UIView {
     private func setup() {
         // Create base labels
         for i in 0..<itemTitles.count {
+            // Label property
             let label = UILabel(frame: CGRect(x: CGFloat(i) * itemWidth, y: 0.0, width: itemWidth, height: frame.height))
             label.textAlignment = .center
             label.text = itemTitles[i]
-            baseLabels.append(label)
             
+            // Tap gesture
+            label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.labelTapped(recognizer:))))
+            label.isUserInteractionEnabled = true
+            
+            // Add label to list and base
+            baseLabels.append(label)
             self.addSubview(label)
         }
         
@@ -99,6 +112,28 @@ public class TDSwiftSegmentedControl: UIView {
         for label in baseLabels {
             label.font = baseLabelFont
             label.textColor = baseLabelColor
+        }
+    }
+    
+    @objc private func labelTapped(recognizer: UITapGestureRecognizer) {
+        if recognizer.state == .ended,
+            let tappedLabel = recognizer.view as? UILabel,
+            let tappedIndex = baseLabels.firstIndex(of: tappedLabel) {
+            moveButtonToItem(atIndex: tappedIndex)
+        }
+    }
+    
+    public func moveButtonToItem(atIndex index: Int) {
+        // Index invalid
+        if (index < 0 || index > baseLabels.count - 1) { return }
+        
+        // Animate button
+        UIView.animate(withDuration: 1.0, delay: 0.0, usingSpringWithDamping: 0.75, initialSpringVelocity: 0.0, options: [.curveEaseOut, .transitionCrossDissolve], animations: {
+            self.controlButton.setTitle(self.itemTitles[index], for: .normal)
+            self.controlButton.center = self.baseLabels[index].center
+        }) { (result) in
+            // Call delegate method
+            self.delegate?.itemSelected(atIndex: index)
         }
     }
 }

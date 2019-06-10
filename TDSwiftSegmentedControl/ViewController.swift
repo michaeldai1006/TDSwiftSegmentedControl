@@ -9,6 +9,7 @@ class ViewController: UIViewController {
         let segmentedControl = TDSwiftSegmentedControl(frame: controlFrame,
                                                        itemTitles: ["Apple", "Banana", "Orange"])
         self.view.addSubview(segmentedControl)
+        segmentedControl.moveButtonToItem(atIndex: 2)
     }
 }
 
