@@ -2,6 +2,9 @@ import Foundation
 import UIKit
 
 public class TDSwiftSegmentedControl: UIView {
+    // Static values
+    static private let buttonGap: CGFloat = 2.0
+    
     // Default control config
     static public let defaultConfig = TDSwiftSegmentedControlConfig.init(cornerRadius: 5.0,
                                                                   baseBackgroundColor: UIColor(red:0.95, green:0.95, blue:0.95, alpha:1.0),
@@ -20,13 +23,14 @@ public class TDSwiftSegmentedControl: UIView {
     public var baseLabelColor: UIColor! { didSet { self.updateBaseLabel() } }
     
     // Button properties
-    public var buttonColor: UIColor!
-    public var buttonLabelFont: UIFont!
-    public var buttonLabelColor: UIColor!
+    public var buttonColor: UIColor! { didSet { self.controlButton.backgroundColor = buttonColor } }
+    public var buttonLabelFont: UIFont! { didSet { self.controlButton.titleLabel?.font = buttonLabelFont } }
+    public var buttonLabelColor: UIColor! { didSet { self.controlButton.setTitleColor(buttonLabelColor, for: .normal) } }
     
     // Items
-    public var itemTitles: [String]!
+    private var itemTitles: [String]!
     private var baseLabels: [UILabel]!
+    private var controlButton: UIButton!
     
     // Computed properties
     private var itemWidth: CGFloat {
@@ -61,6 +65,14 @@ public class TDSwiftSegmentedControl: UIView {
             
             self.addSubview(label)
         }
+        
+        // Control button
+        controlButton = UIButton(frame: CGRect(x: TDSwiftSegmentedControl.buttonGap,
+                                               y: TDSwiftSegmentedControl.buttonGap,
+                                               width: itemWidth - TDSwiftSegmentedControl.buttonGap * 2,
+                                               height: frame.height - TDSwiftSegmentedControl.buttonGap * 2))
+        controlButton.setTitle(itemTitles.first, for: .normal)
+        self.addSubview(controlButton)
     }
     
     private func configControlProperties(config: TDSwiftSegmentedControlConfig) {
@@ -74,11 +86,13 @@ public class TDSwiftSegmentedControl: UIView {
     }
     
     private func updateCornerRadius() {
-        // Clips to bounds
-        self.clipsToBounds = true
-        
         // Base corner radius
+        self.clipsToBounds = true
         self.layer.cornerRadius = self.cornerRadius
+        
+        // Control button
+        self.controlButton.clipsToBounds = true
+        self.controlButton.layer.cornerRadius = self.cornerRadius
     }
     
     private func updateBaseLabel() {
