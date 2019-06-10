@@ -135,7 +135,7 @@ public class TDSwiftSegmentedControl: UIView {
         if recognizer.state == .ended,
             let tappedLabel = recognizer.view as? UILabel,
             let tappedIndex = baseLabels.firstIndex(of: tappedLabel) {
-            moveButtonToItem(atIndex: tappedIndex)
+            moveButtonToItem(atIndex: tappedIndex, callDelegate: true)
         }
     }
     
@@ -168,16 +168,16 @@ public class TDSwiftSegmentedControl: UIView {
             controlButton.center = CGPoint(x: newX, y: controlButton.center.y)
         case .ended, .failed, .cancelled:
             if let nearestIndex = nearestIndex(toPoint: controlButton.center) {
-                moveButtonToItem(atIndex: nearestIndex)
+                moveButtonToItem(atIndex: nearestIndex, callDelegate: nearestIndex != initButtonIndex)
             } else {
-                moveButtonToItem(atIndex: initButtonIndex)
+                moveButtonToItem(atIndex: initButtonIndex, callDelegate: false)
             }
             
         default: break
         }
     }
     
-    public func moveButtonToItem(atIndex index: Int) {
+    public func moveButtonToItem(atIndex index: Int, callDelegate: Bool) {
         // Index invalid
         if (index < 0 || index > baseLabels.count - 1) { return }
         
@@ -187,7 +187,7 @@ public class TDSwiftSegmentedControl: UIView {
             self.controlButton.center = self.baseLabels[index].center
         }) { (result) in
             // Call delegate method
-            self.delegate?.itemSelected(atIndex: index)
+            if callDelegate { self.delegate?.itemSelected(atIndex: index) }
         }
     }
 }
