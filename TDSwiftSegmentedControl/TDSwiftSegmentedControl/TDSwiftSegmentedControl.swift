@@ -181,13 +181,13 @@ public class TDSwiftSegmentedControl: UIView {
         // Index invalid
         if (index < 0 || index > baseLabels.count - 1) { return }
         
+        // Call delegate method
+        if callDelegate { self.delegate?.itemSelected(atIndex: index) }
+        
         // Animate button
         UIView.animate(withDuration: TDSwiftSegmentedControl.buttonAnimationDuration, delay: 0.0, usingSpringWithDamping: TDSwiftSegmentedControl.buttonAnimationDamping, initialSpringVelocity: 0.0, options: [.curveEaseOut, .transitionCrossDissolve], animations: {
             self.controlButton.setTitle(self.itemTitles[index], for: .normal)
             self.controlButton.center = self.baseLabels[index].center
-        }) { (result) in
-            // Call delegate method
-            if callDelegate { self.delegate?.itemSelected(atIndex: index) }
-        }
+        })
     }
 }
