@@ -37,9 +37,17 @@ public class TDSwiftSegmentedControl: UIView {
     public var buttonLabelColor: UIColor! { didSet { self.controlButton.setTitleColor(buttonLabelColor, for: .normal) } }
     
     // Items
-    private var itemTitles: [String]!
     private var baseLabels: [UILabel]!
     private var controlButton: UIButton!
+    public var itemTitles: [String]! {
+        didSet {
+            if itemTitles != nil {
+                self.baseLabels = []
+                setup()
+                configControlProperties(config: TDSwiftSegmentedControl.defaultConfig)
+            }
+        }
+    }
     
     // Computed properties
     private var itemWidth: CGFloat {
@@ -64,8 +72,6 @@ public class TDSwiftSegmentedControl: UIView {
         super.init(coder: aDecoder)
         self.itemTitles = []
         self.baseLabels = []
-        setup()
-        configControlProperties(config: TDSwiftSegmentedControl.defaultConfig)
     }
     
     private func setup() {
